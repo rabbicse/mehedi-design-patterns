@@ -87,18 +87,25 @@ public class Subject<T> : IAsyncSubject<T>, IDisposable
     {
         if (_disposed) return;
 
-        Property = value;
+        foreach (var observer in _observers.ToArray())
+        {
+            try
+            {
+                observer.OnUpdate(value);
+            }
+            catch
+            {
+                // Log error if needed
+                RemoveFaultyObserver(observer);
+            }
+        }
+    }
 
-        // Create a copy to avoid issues if collection is modified during iteration
-        IObserver<T>[] observersCopy;
+    private void RemoveFaultyObserver(IObserver<T> observer)
+    {
         lock (_lock)
         {
-            observersCopy = _observers.ToArray();
-        }
-
-        foreach (var observer in observersCopy)
-        {
-            observer.OnUpdate(value);
+            _observers.Remove(observer);
         }
     }
 
