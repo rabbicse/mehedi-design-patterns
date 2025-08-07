@@ -1,4 +1,4 @@
-name: publish Mehedi.EventBus.Kafka to nuget
+name: publish Mehedi.Patterns.Observer to nuget
 on:
   workflow_dispatch:
   push:
