@@ -13,14 +13,17 @@
             </Grid.RowDefinitions>
 
             <StackPanel Orientation="Horizontal" Margin="10">
-                <TextBox x:Name="StockSymbolTextBox" Width="100" Margin="5"/>
+                <TextBox x:Name="StockSymbolTextBox" Text="{Binding Symbol, Mode=TwoWay}" Width="100" Margin="5"/>
                 <Button Content="Subscribe" Click="Subscribe_Click" Margin="5" Padding="10,0"/>
                 <Button Content="Unsubscribe" Click="Unsubscribe_Click" Margin="5" Padding="10,0"/>
                 <Button Content="Start Updates" Click="StartUpdates_Click" Margin="5" Padding="10,0"/>
                 <Button Content="Stop Updates" Click="StopUpdates_Click" Margin="5" Padding="10,0"/>
             </StackPanel>
 
-            <DataGrid x:Name="StockDataGrid" Grid.Row="1" Margin="10" AutoGenerateColumns="False">
+            <DataGrid x:Name="StockDataGrid" 
+                      ItemsSource="{Binding Path=Stocks}" 
+                      Grid.Row="1" Margin="10" 
+                      AutoGenerateColumns="False">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Symbol" Binding="{Binding Symbol}" Width="100"/>
                     <DataGridTextColumn Header="Price" Binding="{Binding Price}" Width="100"/>
@@ -29,7 +32,7 @@
                 </DataGrid.Columns>
             </DataGrid>
 
-            <TextBlock Grid.Row="1" x:Name="StatusText" VerticalAlignment="Bottom" 
+            <TextBlock Grid.Row="1" x:Name="StatusText" Text="{Binding StatusMessage, Mode=OneWay}" VerticalAlignment="Bottom" 
                    HorizontalAlignment="Right" Margin="10" Foreground="Gray"/>
         </Grid>
     </Window>

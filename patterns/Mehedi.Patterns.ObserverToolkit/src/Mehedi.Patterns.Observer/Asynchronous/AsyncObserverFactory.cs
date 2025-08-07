@@ -88,7 +88,7 @@ public sealed class AsyncObserverFactory : IDisposable
         return (AsyncSubject<T>)_observables.GetOrAdd(key, k => new AsyncSubject<T>());
     }
 
-    private async Task UnregisterHandlerAsync(string key, bool tryRemove = true)
+    public async Task UnregisterHandlerAsync(string key, bool tryRemove = true)
     {
         if (_observables.TryGetValue(key, out var obj) && obj is IDisposable subject)
         {
