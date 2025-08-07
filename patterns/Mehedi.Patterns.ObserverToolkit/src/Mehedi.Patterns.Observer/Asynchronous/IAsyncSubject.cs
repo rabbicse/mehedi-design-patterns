@@ -1,6 +1,4 @@
-﻿using Mehedi.Patterns.Observer.Common;
-
-namespace Mehedi.Patterns.Observer.Asynchronous;
+﻿namespace Mehedi.Patterns.Observer.Asynchronous;
 
 /// <summary>
 /// Represents an asynchronous subject that can notify observers of state changes.

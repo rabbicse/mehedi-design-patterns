@@ -4,27 +4,16 @@
 /// Represents an asynchronous observer that can subscribe to a subject and react to notifications.
 /// </summary>
 /// <typeparam name="T">The type of the notification value.</typeparam>
-public class AsyncObserver<T> : IAsyncObserver<T>, IDisposable
+public class AsyncObserver<T>(object sender, Func<T, Task> asyncAction) : IAsyncObserver<T>, IDisposable
 {
     private IDisposable? _unsubscriber;
     private bool _disposed;
-    private readonly Func<T, Task> _asyncAction;
+    private readonly Func<T, Task> _asyncAction = asyncAction ?? throw new ArgumentNullException(nameof(asyncAction));
 
     /// <summary>
     /// Gets the sender object associated with this observer.
     /// </summary>
-    public object Sender { get; }
-
-    /// <summary>
-    /// Initializes a new instance of the AsyncObserver class.
-    /// </summary>
-    /// <param name="sender">The sender object to associate with this observer.</param>
-    /// <param name="asyncAction">The async action to execute when notified.</param>
-    public AsyncObserver(object sender, Func<T, Task> asyncAction)
-    {
-        Sender = sender ?? throw new ArgumentNullException(nameof(sender));
-        _asyncAction = asyncAction ?? throw new ArgumentNullException(nameof(asyncAction));
-    }
+    public object Sender { get; } = sender ?? throw new ArgumentNullException(nameof(sender));
 
     /// <summary>
     /// Subscribes this observer to the specified subject.
@@ -32,7 +21,7 @@ public class AsyncObserver<T> : IAsyncObserver<T>, IDisposable
     /// <param name="observable">The subject to subscribe to.</param>
     public void Subscribe(IAsyncSubject<T> observable)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(AsyncObserver<T>));
+        ObjectDisposedException.ThrowIf(_disposed, typeof(AsyncObserver<T>));
         _unsubscriber = observable?.Subscribe(this) ?? throw new ArgumentNullException(nameof(observable));
     }
 
@@ -76,5 +65,6 @@ public class AsyncObserver<T> : IAsyncObserver<T>, IDisposable
 
         Unsubscribe();
         _disposed = true;
+        GC.SuppressFinalize(this);
     }
 }

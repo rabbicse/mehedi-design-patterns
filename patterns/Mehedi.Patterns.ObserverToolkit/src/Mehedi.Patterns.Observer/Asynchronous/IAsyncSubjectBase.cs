@@ -1,4 +1,4 @@
-﻿namespace Mehedi.Patterns.Observer.Common;
+﻿namespace Mehedi.Patterns.Observer.Asynchronous;
 
 
 public interface IAsyncSubjectBase : IDisposable

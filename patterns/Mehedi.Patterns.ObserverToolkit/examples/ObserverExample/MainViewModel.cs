@@ -1,11 +1,7 @@
 ﻿using Mehedi.Patterns.Observer.Asynchronous;
-using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Net.Http;
 using System.Windows;
 using System.Windows.Data;
-using System.Windows.Threading;
 
 namespace ObserverExample;
 
@@ -13,8 +9,9 @@ internal class MainViewModel : ObservableObject
 {
     #region Declaration(s)   
     private readonly Random _random = new();
-    private bool _isUpdating = false;
+    private volatile bool _isUpdating = false;
     private const string StockUpdateKey = "StockUpdates";
+    private readonly object _lock = new object();
     #endregion
 
     #region Notification Properties
@@ -50,11 +47,14 @@ internal class MainViewModel : ObservableObject
 
     private string? _statusMessage;
     #endregion
-    private readonly object _lock = new object();
+
+
+    #region Constructor(s)
     public MainViewModel() 
     {
         BindingOperations.EnableCollectionSynchronization(Stocks, _lock);
     }
+    #endregion
 
     public async Task StartUpdateAsync()
     {
@@ -93,6 +93,10 @@ internal class MainViewModel : ObservableObject
 
     private async Task UpdateStockDataAsync(StockData data)
     {
+
+        // Simulate async processing
+        await Task.Delay(100); // Simulate some delay
+
         var existing = Stocks.FirstOrDefault(s => s.Symbol == data.Symbol);
         if (existing != null)
         {
@@ -124,9 +128,9 @@ internal class MainViewModel : ObservableObject
         UpdateStatus($"Subscribed to {symbol} updates");
     }
 
-    public void UnsubscribeAsync() 
+    public async Task UnsubscribeAsync() 
     {
-        AsyncObserverFactory.Instance.UnregisterHandler(StockUpdateKey, this);
+        await AsyncObserverFactory.Instance.UnregisterHandlerAsync(StockUpdateKey, this).ConfigureAwait(false);
         UpdateStatus("Unsubscribed from updates");
     }
 

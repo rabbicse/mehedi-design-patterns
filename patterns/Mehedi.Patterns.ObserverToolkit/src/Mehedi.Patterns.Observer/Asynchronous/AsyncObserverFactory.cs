@@ -1,5 +1,5 @@
-﻿using Mehedi.Patterns.Observer.Synchronous;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Mehedi.Patterns.Observer.Asynchronous;
 
@@ -9,7 +9,7 @@ namespace Mehedi.Patterns.Observer.Asynchronous;
 public sealed class AsyncObserverFactory : IDisposable
 {
     private static readonly Lazy<AsyncObserverFactory> _instance = new(() => new AsyncObserverFactory());
-    private readonly ConcurrentDictionary<string, object> _observables;
+    private readonly ConcurrentDictionary<string, object> _observables = new();
     private bool _disposed;
 
     /// <summary>
@@ -52,21 +52,6 @@ public sealed class AsyncObserverFactory : IDisposable
     }
 
     /// <summary>
-    /// Unregisters all handlers associated with the specified sender from the subject.
-    /// </summary>
-    public void UnregisterHandler(string key, object sender)
-    {
-        if (_disposed) return;
-        if (string.IsNullOrWhiteSpace(key)) return;
-        if (sender == null) return;
-
-        if (_observables.TryGetValue(key, out var obj) && obj is ISubjectBase subject)
-        {
-            subject.Unsubscribe(sender);
-        }
-    }
-
-    /// <summary>
     /// Unregisters all subscriptions and clears all subjects from the factory.
     /// </summary>
     public async Task UnregisterAllSubscriptionAsync()
@@ -88,31 +73,34 @@ public sealed class AsyncObserverFactory : IDisposable
         return (AsyncSubject<T>)_observables.GetOrAdd(key, k => new AsyncSubject<T>());
     }
 
+    /// <summary>
+    /// Unregisters all handlers associated with the specified sender from the subject.
+    /// </summary>
+    public async Task UnregisterHandlerAsync(string key, object sender)
+    {
+        if (_disposed) return;
+        if (string.IsNullOrWhiteSpace(key)) return;
+        if (sender == null) return;
+
+        if (_observables.TryGetValue(key, out var obj) && obj is IAsyncSubjectBase subject)
+        {
+            await subject.UnsubscribeAsync(sender).ConfigureAwait(false);
+        }
+    }
+
     public async Task UnregisterHandlerAsync(string key, bool tryRemove = true)
     {
-        if (_observables.TryGetValue(key, out var obj) && obj is IDisposable subject)
-        {
-            try
-            {
-                // Dynamically invoke UnsubscribeAsync if available
-                var unsubscribeMethod = subject.GetType().GetMethod("UnsubscribeAsync");
-                if (unsubscribeMethod != null)
-                {
-                    var result = unsubscribeMethod.Invoke(subject, null);
-                    if (result is Task task)
-                    {
-                        await task.ConfigureAwait(false);
-                    }
-                }
-            }
-            finally
-            {
-                subject.Dispose();
+        if (_disposed) return;
+        if (string.IsNullOrWhiteSpace(key)) return;
 
-                if (tryRemove)
-                {
-                    _observables.TryRemove(key, out _);
-                }
+        if (_observables.TryGetValue(key, out var obj) && obj is IAsyncSubjectBase subject)
+        {
+            await subject.UnsubscribeAsync().ConfigureAwait(false);
+            subject.Dispose();
+
+            if (tryRemove)
+            {
+                _observables.TryRemove(key, out _);
             }
         }
     }
