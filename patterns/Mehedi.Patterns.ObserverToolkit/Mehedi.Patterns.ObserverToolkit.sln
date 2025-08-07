@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36327.8 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mehedi.Patterns.Observer", "src\Mehedi.Patterns.Observer\Mehedi.Patterns.Observer.csproj", "{623E4DFA-9BB2-187C-01BB-BC4E7B5F3CF8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{153A943F-9575-409F-B3B9-413A2DB45BA7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{932DB8B8-264C-441A-8B04-E75843103E55}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ObserverTests", "tests\ObserverTests\ObserverTests.csproj", "{9769F4A5-6A43-4CC3-96C8-0172871BE257}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ObserverExample", "examples\ObserverExample\ObserverExample.csproj", "{A9B2F83B-F45B-4848-8C13-FA77F8DE97FF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{623E4DFA-9BB2-187C-01BB-BC4E7B5F3CF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{623E4DFA-9BB2-187C-01BB-BC4E7B5F3CF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{623E4DFA-9BB2-187C-01BB-BC4E7B5F3CF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{623E4DFA-9BB2-187C-01BB-BC4E7B5F3CF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9769F4A5-6A43-4CC3-96C8-0172871BE257}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9769F4A5-6A43-4CC3-96C8-0172871BE257}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9769F4A5-6A43-4CC3-96C8-0172871BE257}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9769F4A5-6A43-4CC3-96C8-0172871BE257}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9B2F83B-F45B-4848-8C13-FA77F8DE97FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9B2F83B-F45B-4848-8C13-FA77F8DE97FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9B2F83B-F45B-4848-8C13-FA77F8DE97FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9B2F83B-F45B-4848-8C13-FA77F8DE97FF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{623E4DFA-9BB2-187C-01BB-BC4E7B5F3CF8} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{9769F4A5-6A43-4CC3-96C8-0172871BE257} = {932DB8B8-264C-441A-8B04-E75843103E55}
+		{A9B2F83B-F45B-4848-8C13-FA77F8DE97FF} = {153A943F-9575-409F-B3B9-413A2DB45BA7}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5EE06D95-8801-42B2-82A4-7389E648AD0D}
+	EndGlobalSection
+EndGlobal
