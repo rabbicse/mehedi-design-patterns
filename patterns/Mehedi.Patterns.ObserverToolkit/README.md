@@ -21,11 +21,27 @@ The `Mehedi.Patterns.ObserverToolkit` is part of the `mehedi-design-patterns` re
 
 ### Prerequisites
 
-- .NET Core SDK (version 6.0 or higher)
+- .NET Core SDK (version 8.0 or higher)
 - Visual Studio 2022 or any compatible IDE
 - Basic understanding of the Observer pattern and Clean Architecture
 
-### Installation
+### Installation via nuget package
+
+1. Create .NET 8 project (WPF, Winform,Console or event ASP.NET Core).
+2. Install package by 
+   ```bash
+   dotnet add package Mehedi.Patterns.Observer
+   ```
+3. Restore dependencies:
+   ```bash
+   dotnet restore
+   ```
+4. Build the project:
+   ```bash
+   dotnet build
+   ```
+
+### Installation from Source
 
 1. Clone the repository:
    ```bash
@@ -95,7 +111,7 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 
 ## Contact
 
-For questions or feedback, reach out via [GitHub Issues](https://github.com/rabbicse/mehedi-design-patterns/issues) or contact the maintainer at [your-email@example.com].
+For questions or feedback, reach out via [GitHub Issues](https://github.com/rabbicse/mehedi-design-patterns/issues) or contact the maintainer at [rabbi.se@gmail.com].
 
 ---
 
