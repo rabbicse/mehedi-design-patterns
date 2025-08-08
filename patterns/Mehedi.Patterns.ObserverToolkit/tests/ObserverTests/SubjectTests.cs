@@ -42,17 +42,17 @@ public class SubjectTests
         var subject = new Subject<string>();
 
         // Bad observer that throws
-        var badObserver = new Observer<string>(new object(), async _ =>
+        var badObserver = new Observer<string>(new object(), _ =>
         {
-            await Task.Delay(10);
+            Thread.Sleep(1000); // Simulate some work
             throw new InvalidOperationException("Test exception");
         });
 
         // Good observer
-        var goodObserver = new Observer<string>(new object(), async _ =>
+        var goodObserver = new Observer<string>(new object(), _ =>
         {
             goodObserverCalled = true;
-            await Task.Delay(10);
+            Thread.Sleep(100); // Simulate some work
         });
 
         // Act

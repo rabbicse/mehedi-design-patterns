@@ -1,27 +1,27 @@
-﻿using Mehedi.Patterns.Observer.Synchronous;
-
-namespace Mehedi.Patterns.Observer.Asynchronous;
+﻿namespace Mehedi.Patterns.Observer.Asynchronous;
 
 /// <summary>
 /// Represents an asynchronous subject that maintains a list of observers and notifies them of state changes.
 /// </summary>
 /// <typeparam name="T">The type of the notification value.</typeparam>
-public class AsyncSubject<T> : IAsyncSubject<T>
+public class AsyncSubject<T> : IAsyncSubject<T>, IDisposable
 {
     private readonly List<IAsyncObserver<T>> _observers = new();
     private readonly object _lock = new();
     private bool _disposed;
 
     /// <summary>
-    /// Gets the current property value of the subject.
+    /// Gets the current value held by the subject.
     /// </summary>
     public T? Property { get; private set; }
 
     /// <summary>
-    /// Subscribes an observer to the subject.
+    /// Subscribes an asynchronous observer to the subject.
     /// </summary>
     /// <param name="observer">The observer to subscribe.</param>
-    /// <returns>An IDisposable that can be used to unsubscribe.</returns>
+    /// <returns>An <see cref="IDisposable"/> that can be used to unsubscribe.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when the observer is null.</exception>
+    /// <exception cref="ObjectDisposedException">Thrown when the subject has already been disposed.</exception>
     public IDisposable Subscribe(IAsyncObserver<T> observer)
     {
         if (observer == null) throw new ArgumentNullException(nameof(observer));
@@ -38,10 +38,10 @@ public class AsyncSubject<T> : IAsyncSubject<T>
     }
 
     /// <summary>
-    /// Notifies all subscribed observers with the specified value.
+    /// Notifies all subscribed observers asynchronously with the specified value.
     /// </summary>
     /// <param name="value">The value to notify observers with.</param>
-    /// <returns>A Task representing the asynchronous operation.</returns>
+    /// <returns>A task representing the asynchronous notification operation.</returns>
     public async Task NotifyAsync(T value)
     {
         if (_disposed) return;
@@ -54,13 +54,18 @@ public class AsyncSubject<T> : IAsyncSubject<T>
             observersCopy = _observers.ToArray();
         }
 
-        // Run all observers concurrently
-        var notificationTasks = observersCopy.Select(observer =>
-            SafeNotifyObserverAsync(observer, value));
+        var notificationTasks = observersCopy
+            .Select(observer => SafeNotifyObserverAsync(observer, value));
 
-        await Task.WhenAll(notificationTasks);
+        await Task.WhenAll(notificationTasks).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Safely notifies an individual observer and suppresses any thrown exceptions.
+    /// </summary>
+    /// <param name="observer">The observer to notify.</param>
+    /// <param name="value">The value to send to the observer.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     private async Task SafeNotifyObserverAsync(IAsyncObserver<T> observer, T value)
     {
         try
@@ -69,61 +74,79 @@ public class AsyncSubject<T> : IAsyncSubject<T>
         }
         catch
         {
-            // Log or handle observer errors as needed
-            // Consider removing faulty observers
+            // Suppress exceptions to avoid breaking the notification loop
+            // Optional: log or remove faulty observers
         }
     }
 
+    /// <summary>
+    /// Unsubscribes all observers associated with the specified sender.
+    /// </summary>
+    /// <param name="sender">The sender whose observers should be unsubscribed.</param>
+    /// <returns>A task representing the asynchronous unsubscription operation.</returns>
     public async Task UnsubscribeAsync(object sender)
     {
         if (_disposed) return;
 
-        List<Task> completionTasks = new();
-        List<IAsyncObserver<T>> observersToRemove = new();
+        List<Task> completionTasks;
+        List<IAsyncObserver<T>> observersToRemove;
 
         lock (_lock)
         {
             observersToRemove = _observers
                 .OfType<AsyncObserver<T>>()
                 .Where(o => o.Sender == sender)
-                .Cast<IAsyncObserver<T>>() // Fix: Cast to interface type
+                .Cast<IAsyncObserver<T>>()
                 .ToList();
 
             foreach (var observer in observersToRemove)
             {
-                completionTasks.Add(observer.OnCompletedAsync());
                 _observers.Remove(observer);
             }
         }
+
+        completionTasks = observersToRemove
+            .Select(o => o.OnCompletedAsync())
+            .ToList();
 
         await Task.WhenAll(completionTasks).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Unsubscribes all observers from this subject.
+    /// Unsubscribes all observers from this subject and notifies them of completion.
     /// </summary>
-    /// <returns>A Task representing the asynchronous operation.</returns>
+    /// <returns>A task representing the asynchronous unsubscription operation.</returns>
     public async Task UnsubscribeAsync()
     {
         if (_disposed) return;
 
-        List<Task> completionTasks;
+        List<IAsyncObserver<T>> observersCopy;
         lock (_lock)
         {
-            completionTasks = _observers.Select(observer =>
-                observer.OnCompletedAsync()).ToList();
+            observersCopy = _observers.ToList();
             _observers.Clear();
         }
+
+        var completionTasks = observersCopy
+            .Select(observer => observer.OnCompletedAsync())
+            .ToList();
 
         await Task.WhenAll(completionTasks).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Disposes the subject and unsubscribes all observers asynchronously.
+    /// </summary>
     public void Dispose()
     {
         Dispose(true);
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>
+    /// Disposes the subject and releases resources.
+    /// </summary>
+    /// <param name="disposing">Indicates whether managed resources should be disposed.</param>
     protected virtual async void Dispose(bool disposing)
     {
         if (_disposed) return;

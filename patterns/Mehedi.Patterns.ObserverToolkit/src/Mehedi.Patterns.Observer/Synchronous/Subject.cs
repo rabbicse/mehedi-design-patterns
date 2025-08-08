@@ -1,29 +1,40 @@
 ﻿namespace Mehedi.Patterns.Observer.Synchronous;
 
 /// <summary>
-/// Represents a generic subject that maintains a list of observers and notifies them of state changes.
-/// Implements both <see cref="IAsyncSubject{T}"/> and <see cref="ISubjectBase"/> interfaces.
+/// Represents a synchronous subject that maintains a list of observers and notifies them of state changes.
 /// </summary>
 /// <typeparam name="T">The type of the notification value.</typeparam>
-public class Subject<T> : IAsyncSubject<T>, IDisposable
+public class Subject<T> : ISubject<T>, IDisposable
 {
-    #region Field(s)
+    #region Fields
+
     private readonly List<IObserver<T>> _observers = new();
     private readonly object _lock = new();
     private bool _disposed;
+
     #endregion
+
+    #region Properties
 
     /// <summary>
     /// Gets the current property value of the subject.
+    /// This property is updated with the last value passed to <see cref="Notify"/>.
     /// </summary>
     public T? Property { get; private set; }
+
+    #endregion
+
+    #region Subscription Methods
 
     /// <summary>
     /// Subscribes an observer to the subject.
     /// </summary>
     /// <param name="observer">The observer to subscribe.</param>
-    /// <returns>An IDisposable that can be used to unsubscribe.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if observer is null.</exception>
+    /// <returns>
+    /// An <see cref="IDisposable"/> instance that can be used to unsubscribe the observer.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">Thrown if the observer is null.</exception>
+    /// <exception cref="ObjectDisposedException">Thrown if the subject has been disposed.</exception>
     public IDisposable Subscribe(IObserver<T> observer)
     {
         ArgumentNullException.ThrowIfNull(observer);
@@ -35,26 +46,28 @@ public class Subject<T> : IAsyncSubject<T>, IDisposable
             {
                 _observers.Add(observer);
             }
+
             return new Unsubscriber<T>(_observers, observer);
         }
     }
 
     /// <summary>
-    /// Unsubscribes all observers associated with the specified sender.
+    /// Unsubscribes all observers associated with a specific sender object.
+    /// Only works if the observer is of type <see cref="Observer{T}"/>.
     /// </summary>
-    /// <param name="sender">The sender whose observers should be unsubscribed.</param>
+    /// <param name="sender">The sender associated with observers to be removed.</param>
     public void Unsubscribe(object sender)
     {
         if (_disposed) return;
 
         lock (_lock)
         {
-            var observersToRemove = _observers
+            var toRemove = _observers
                 .OfType<Observer<T>>()
                 .Where(o => o.Sender == sender)
                 .ToList();
 
-            foreach (var observer in observersToRemove)
+            foreach (var observer in toRemove)
             {
                 _observers.Remove(observer);
                 observer.Unsubscribe();
@@ -63,7 +76,7 @@ public class Subject<T> : IAsyncSubject<T>, IDisposable
     }
 
     /// <summary>
-    /// Unsubscribes all observers from this subject.
+    /// Unsubscribes all currently subscribed observers from the subject.
     /// </summary>
     public void Unsubscribe()
     {
@@ -75,17 +88,28 @@ public class Subject<T> : IAsyncSubject<T>, IDisposable
             {
                 observer.OnCompleted();
             }
+
             _observers.Clear();
         }
     }
+
+    #endregion
+
+    #region Notification
 
     /// <summary>
     /// Notifies all subscribed observers with the specified value.
     /// </summary>
     /// <param name="value">The value to notify observers with.</param>
+    /// <remarks>
+    /// Updates the <see cref="Property"/> to reflect the latest notification value.
+    /// Observers that throw exceptions will be removed.
+    /// </remarks>
     public void Notify(T value)
     {
         if (_disposed) return;
+
+        Property = value;
 
         foreach (var observer in _observers.ToArray())
         {
@@ -95,12 +119,16 @@ public class Subject<T> : IAsyncSubject<T>, IDisposable
             }
             catch
             {
-                // Log error if needed
                 RemoveFaultyObserver(observer);
+                // Optional: log or report observer failure
             }
         }
     }
 
+    /// <summary>
+    /// Removes an observer from the list if it throws an exception during notification.
+    /// </summary>
+    /// <param name="observer">The faulty observer to remove.</param>
     private void RemoveFaultyObserver(IObserver<T> observer)
     {
         lock (_lock)
@@ -109,8 +137,12 @@ public class Subject<T> : IAsyncSubject<T>, IDisposable
         }
     }
 
+    #endregion
+
+    #region IDisposable Implementation
+
     /// <summary>
-    /// Disposes the subject and unsubscribes all observers.
+    /// Releases all resources used by the subject and unsubscribes all observers.
     /// </summary>
     public void Dispose()
     {
@@ -118,6 +150,12 @@ public class Subject<T> : IAsyncSubject<T>, IDisposable
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>
+    /// Disposes the subject and its resources.
+    /// </summary>
+    /// <param name="disposing">
+    /// true to release both managed and unmanaged resources; false to release only unmanaged resources.
+    /// </param>
     protected virtual void Dispose(bool disposing)
     {
         if (_disposed) return;
@@ -129,4 +167,6 @@ public class Subject<T> : IAsyncSubject<T>, IDisposable
 
         _disposed = true;
     }
+
+    #endregion
 }

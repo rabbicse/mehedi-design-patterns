@@ -5,42 +5,41 @@
 /// Implements both <see cref="IObserver{T}"/> and <see cref="IDisposable"/> interfaces.
 /// </summary>
 /// <typeparam name="T">The type of the notification value.</typeparam>
-public class Observer<T> : IObserver<T>, IDisposable
+/// <remarks>
+/// Initializes a new instance of the <see cref="Observer{T}"/> class.
+/// </remarks>
+/// <param name="sender">An object representing the source or owner of this observer instance.</param>
+/// <param name="action">The action to execute when a notification is received.</param>
+/// <exception cref="ArgumentNullException">Thrown if <paramref name="sender"/> or <paramref name="action"/> is null.</exception>
+public class Observer<T>(object sender, Action<T> action) : IObserver<T>, IDisposable
 {
     private IDisposable? _unsubscriber;
     private bool _disposed;
 
+    private readonly Action<T> _action = action ?? throw new ArgumentNullException(nameof(action));
+
     /// <summary>
     /// Gets the sender object associated with this observer.
+    /// Used for identification when unsubscribing.
     /// </summary>
-    public object Sender { get; }
-
-    private readonly Action<T> _action;
-
-    /// <summary>
-    /// Initializes a new instance of the Observer class.
-    /// </summary>
-    /// <param name="sender">The sender object to associate with this observer.</param>
-    /// <param name="action">The action to execute when notified.</param>
-    public Observer(object sender, Action<T> action)
-    {
-        Sender = sender ?? throw new ArgumentNullException(nameof(sender));
-        _action = action ?? throw new ArgumentNullException(nameof(action));
-    }
+    public object Sender { get; } = sender ?? throw new ArgumentNullException(nameof(sender));
 
     /// <summary>
-    /// Subscribes this observer to the specified subject.
+    /// Subscribes this observer to the given subject.
     /// </summary>
-    /// <param name="observable">The subject to subscribe to.</param>
-    /// <exception cref="ArgumentNullException">Thrown if observable is null.</exception>
-    public void Subscribe(IAsyncSubject<T> observable)
+    /// <param name="observable">The subject to observe.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="observable"/> is null.</exception>
+    /// <exception cref="ObjectDisposedException">Thrown if the observer has already been disposed.</exception>
+    public void Subscribe(ISubject<T> observable)
     {
-        if (_disposed) ObjectDisposedException.ThrowIf(_disposed, nameof(Observer<T>));
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(Observer<T>));
+
         _unsubscriber = observable?.Subscribe(this) ?? throw new ArgumentNullException(nameof(observable));
     }
 
     /// <summary>
-    /// Unsubscribes this observer from its subject.
+    /// Unsubscribes this observer from the subject it is observing.
     /// </summary>
     public void Unsubscribe()
     {
@@ -51,7 +50,8 @@ public class Observer<T> : IObserver<T>, IDisposable
     }
 
     /// <summary>
-    /// Called when the subject has completed sending notifications.
+    /// Called by the subject to indicate that no further updates will be sent.
+    /// Automatically unsubscribes the observer.
     /// </summary>
     public void OnCompleted()
     {
@@ -59,19 +59,19 @@ public class Observer<T> : IObserver<T>, IDisposable
     }
 
     /// <summary>
-    /// Called when the subject sends a notification.
+    /// Called by the subject to notify the observer of a new update.
     /// </summary>
-    /// <param name="value">The notification value.</param>
+    /// <param name="value">The updated value.</param>
     public void OnUpdate(T value)
     {
         if (!_disposed)
         {
-            _action?.Invoke(value);
+            _action.Invoke(value);
         }
     }
 
     /// <summary>
-    /// Disposes the observer and unsubscribes from its subject.
+    /// Disposes the observer and unsubscribes it from the subject.
     /// </summary>
     public void Dispose()
     {
@@ -79,6 +79,10 @@ public class Observer<T> : IObserver<T>, IDisposable
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>
+    /// Protected implementation of the dispose pattern.
+    /// </summary>
+    /// <param name="disposing">Indicates whether the method is called from Dispose or finalizer.</param>
     protected virtual void Dispose(bool disposing)
     {
         if (_disposed) return;

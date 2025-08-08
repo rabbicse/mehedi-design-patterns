@@ -11,4 +11,15 @@
     <RepositoryUrl>https://github.com/rabbicse/mehedi-design-patterns</RepositoryUrl>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Include README.md in the package root -->
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="README.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

@@ -1,19 +1,18 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 
 namespace Mehedi.Patterns.Observer.Asynchronous;
 
 /// <summary>
-/// Provides a thread-safe factory for creating and managing async observers and subjects.
+/// Provides a thread-safe singleton factory for creating and managing asynchronous observers and subjects.
 /// </summary>
 public sealed class AsyncObserverFactory : IDisposable
 {
     private static readonly Lazy<AsyncObserverFactory> _instance = new(() => new AsyncObserverFactory());
-    private readonly ConcurrentDictionary<string, object> _observables = new();
+    private readonly ConcurrentDictionary<string, object> _observables;
     private bool _disposed;
 
     /// <summary>
-    /// Gets the singleton instance of the AsyncObserverFactory.
+    /// Gets the singleton instance of the <see cref="AsyncObserverFactory"/>.
     /// </summary>
     public static AsyncObserverFactory Instance => _instance.Value;
 
@@ -23,8 +22,15 @@ public sealed class AsyncObserverFactory : IDisposable
     }
 
     /// <summary>
-    /// Registers an async handler to the specified subject.
+    /// Registers an asynchronous handler with the specified subject identified by the key.
+    /// Creates the subject if it does not already exist.
     /// </summary>
+    /// <typeparam name="T">The type of the notification value.</typeparam>
+    /// <param name="key">The unique key identifying the subject.</param>
+    /// <param name="sender">The sender object associated with the observer.</param>
+    /// <param name="asyncAction">The asynchronous action to invoke when the observer is notified.</param>
+    /// <exception cref="ObjectDisposedException">Thrown if the factory has been disposed.</exception>
+    /// <exception cref="ArgumentNullException">Thrown if any argument is null or invalid.</exception>
     public void RegisterHandler<T>(string key, object sender, Func<T, Task> asyncAction)
     {
         if (_disposed) throw new ObjectDisposedException(nameof(AsyncObserverFactory));
@@ -38,8 +44,11 @@ public sealed class AsyncObserverFactory : IDisposable
     }
 
     /// <summary>
-    /// Notifies all observers subscribed to the specified subject.
+    /// Asynchronously notifies all observers subscribed to the subject identified by the key.
     /// </summary>
+    /// <typeparam name="T">The type of the notification value.</typeparam>
+    /// <param name="key">The unique key identifying the subject.</param>
+    /// <param name="value">The notification value to send to observers.</param>
     public async Task NotifyAsync<T>(string key, T value)
     {
         if (_disposed) return;
@@ -52,7 +61,7 @@ public sealed class AsyncObserverFactory : IDisposable
     }
 
     /// <summary>
-    /// Unregisters all subscriptions and clears all subjects from the factory.
+    /// Asynchronously unregisters all subscriptions and clears all subjects from the factory.
     /// </summary>
     public async Task UnregisterAllSubscriptionAsync()
     {
@@ -66,16 +75,25 @@ public sealed class AsyncObserverFactory : IDisposable
         _observables.Clear();
     }
 
+    /// <summary>
+    /// Retrieves an existing subject identified by the key or creates a new one if it does not exist.
+    /// </summary>
+    /// <typeparam name="T">The type of the notification value.</typeparam>
+    /// <param name="key">The unique key identifying the subject.</param>
+    /// <returns>The existing or newly created subject.</returns>
+    /// <exception cref="ObjectDisposedException">Thrown if the factory has been disposed.</exception>
     private AsyncSubject<T> GetOrCreateSubject<T>(string key)
     {
         if (_disposed) throw new ObjectDisposedException(nameof(AsyncObserverFactory));
 
-        return (AsyncSubject<T>)_observables.GetOrAdd(key, k => new AsyncSubject<T>());
+        return (AsyncSubject<T>)_observables.GetOrAdd(key, _ => new AsyncSubject<T>());
     }
 
     /// <summary>
-    /// Unregisters all handlers associated with the specified sender from the subject.
+    /// Asynchronously unregisters all observers associated with the specified sender from the subject identified by the key.
     /// </summary>
+    /// <param name="key">The unique key identifying the subject.</param>
+    /// <param name="sender">The sender whose observers should be unsubscribed.</param>
     public async Task UnregisterHandlerAsync(string key, object sender)
     {
         if (_disposed) return;
@@ -88,6 +106,11 @@ public sealed class AsyncObserverFactory : IDisposable
         }
     }
 
+    /// <summary>
+    /// Asynchronously unregisters all observers from the subject identified by the key and optionally removes the subject from the factory.
+    /// </summary>
+    /// <param name="key">The unique key identifying the subject.</param>
+    /// <param name="tryRemove">Indicates whether to remove the subject from the factory after unsubscription. Defaults to true.</param>
     public async Task UnregisterHandlerAsync(string key, bool tryRemove = true)
     {
         if (_disposed) return;
@@ -105,18 +128,20 @@ public sealed class AsyncObserverFactory : IDisposable
         }
     }
 
+    /// <summary>
+    /// Disposes the factory and unregisters all subscriptions synchronously.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed) return;
 
-        // Note: We're calling the async method synchronously here
-        // which is generally not recommended, but acceptable in disposal
+        // Blocking call to async method acceptable here during disposal
         UnregisterAllSubscriptionAsync().GetAwaiter().GetResult();
         _disposed = true;
     }
 
     /// <summary>
-    /// Shuts down the AsyncObserverFactory, cleaning up all resources.
+    /// Shuts down the factory asynchronously, unregistering all subscriptions and disposing the factory instance.
     /// </summary>
     public static async Task ShutdownAsync()
     {
