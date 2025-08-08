@@ -1,3 +1,6 @@
+[![Nuget](https://img.shields.io/nuget/v/Mehedi.Patterns.Observer)](https://www.nuget.org/packages/Mehedi.Patterns.Observer/)
+[![Nuget](https://img.shields.io/nuget/dt/Mehedi.Patterns.Observer)](https://www.nuget.org/packages/Mehedi.Patterns.Observer/)
+
 # Mehedi.Patterns.ObserverToolkit
 
 A lightweight and reusable implementation of the Observer design pattern for .NET Core, WPF, and WinForms, built with Clean Architecture principles. The `Mehedi.Patterns.ObserverToolkit` provides a flexible and decoupled way to implement event-driven communication in your .NET applications.
