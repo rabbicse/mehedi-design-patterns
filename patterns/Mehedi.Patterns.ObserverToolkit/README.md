@@ -67,25 +67,50 @@ The `Mehedi.Patterns.ObserverToolkit` provides interfaces and classes to impleme
 ```csharp
 using Mehedi.Patterns.ObserverToolkit;
 
-// Create a subject
-var subject = new Subject<string>();
+public class StockData
+{
+    public string? Symbol { get; set; }
+    public double Price { get; set; }
+    public double Change { get; set; }
+    public DateTime Timestamp { get; set; }
+}
 
-// Create observers
-var observer1 = new ConcreteObserver<string>("Observer1");
-var observer2 = new ConcreteObserver<string>("Observer2");
+public class StockMonitor
+{
+   private const string StockUpdateKey = "StockUpdates";
 
-// Subscribe observers to the subject
-subject.Subscribe(observer1);
-subject.Subscribe(observer2);
+   public void Subscribe() 
+   {
+      // Register async handler
+      AsyncObserverFactory.Instance.RegisterHandler<StockData>(
+         StockUpdateKey,
+         this,
+         async data => await UpdateStockDataAsync(data));
+   }
 
-// Notify observers of a state change
-subject.Notify("Data has changed!");
+   public async Task UnsubscribeAsync() 
+   {
+      // Unregister async handler
+      await AsyncObserverFactory.Instance.UnregisterHandlerAsync(StockUpdateKey, this).ConfigureAwait(false);
+   }
 
-// Unsubscribe an observer
-subject.Unsubscribe(observer1);
+    private async Task UpdateStockDataAsync(StockData data)
+    {
+
+        // Simulate async processing
+        await Task.Delay(100); // Simulate some delay
+
+        var existing = Stocks.FirstOrDefault(s => s.Symbol == data.Symbol);
+        if (existing != null)
+        {
+            Stocks.Remove(existing);
+        }
+        Stocks.Add(data);
+    }
+}
 ```
 
-This example demonstrates subscribing observers to a subject and notifying them of changes. Check the `src` directory for detailed examples and additional configuration options.
+This example demonstrates subscribing observers to a subject and notifying them of changes. Check the `src` directory for detailed examples and additional configuration options. For more details check [example](https://github.com/rabbicse/mehedi-design-patterns/tree/master/patterns/Mehedi.Patterns.ObserverToolkit/examples/ObserverExample) section.
 
 ## Project Structure
 
